@@ -3,7 +3,7 @@ from src.pipline.training_pipeline import TrainPipeline
 pipline = TrainPipeline()
 pipline.run_pipeline()
 
-
+# this is the code to check that logs and artifact are working properly or not 
 # import src.logger  # Ensures logger config runs
 # import logging  # Now import logging separately
 
