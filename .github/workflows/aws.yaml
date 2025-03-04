@@ -3,7 +3,7 @@ name: Deploy Application Docker Image to EC2 instance
 on:
   push:
     branches:
-      - main
+      - main  # Ensure correct indentation here
 
 jobs:
   Continuous-Integration:
@@ -33,7 +33,7 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .  
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV  # Fix set-output (deprecated)
 
   Continuous-Deployment:
     needs: Continuous-Integration
@@ -50,36 +50,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
-      - name: Install Docker (if not installed)
-        run: |
-          if ! command -v docker &> /dev/null
-          then
-            echo "Docker not found! Installing..."
-            sudo apt update
-            sudo apt install -y docker.io
-            sudo systemctl start docker
-            sudo systemctl enable docker
-          else
-            echo "Docker is already installed"
-          fi
-
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Debug Image Name
-        run: echo "Image name: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO }}:latest"
-
-      - name: Stop Existing Containers on Port 5000 (If Any)
-        run: |
-          CONTAINER_ID=$(docker ps -q --filter "publish=5000")
-          if [ ! -z "$CONTAINER_ID" ]; then
-            echo "Stopping container using port 5000..."
-            docker stop $CONTAINER_ID
-          else
-            echo "No container running on port 5000"
-          fi
-
       - name: Run Docker Image to serve users
         run: |
-          docker run -d \-e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \-e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \-e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" \-e MONGODB_URL="${{ secrets.MONGODB_URL }}" \-p 5000:5000 \"${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPO }}:latest"
+         docker run -d -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" -e AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}" -e MONGODB_URL="${{ secrets.MONGODB_URL }}" -p 5000:5000 "${{ steps.login-ecr.outputs.registry }}"/"${{ secrets.ECR_REPO }}":latest
